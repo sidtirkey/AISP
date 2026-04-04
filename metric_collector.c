@@ -5,6 +5,7 @@
 
 
 int collect_cpu_metric(char *cpu, unsigned long *total_cpu_time, unsigned long *idle_time){
+	/*Collects CPU metric from /proc/stat file*/
 	FILE *fp = fopen("/proc/stat","r");
 	if (fp == NULL){
 		perror("Error opening /proc/stat\n");
@@ -34,6 +35,7 @@ int collect_cpu_metric(char *cpu, unsigned long *total_cpu_time, unsigned long *
 
 
 double cpu_util_interval(int sleep_time){
+	/*returns cpu utilisation in terms of a percentage */
 	char cpu[10];
 	unsigned long total_cpu_util_time_1, idle_time_1, total_cpu_util_time_2, idle_time_2;
 	unsigned long delta_total_cpu_time, delta_idle;
