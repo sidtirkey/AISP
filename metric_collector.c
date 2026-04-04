@@ -17,16 +17,16 @@ int collect_cpu_metric(char *cpu, unsigned long *total_cpu_time, unsigned long *
 	int parse_result = fscanf(fp,"%s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", cpu, &user,
 			&nice, &system, &idle, &iowait, &irq, &softirq, &steal, &guest, &guest_nice);
 	if (parse_result == 11){
-		sum_cpu_time = user+nice+system+idle+iowait+irq+softirq+steal+guest+guest_nice;
+		sum_cpu_time = user+nice+system+idle+iowait+irq+softirq+steal;
 		*total_cpu_time = sum_cpu_time;
 		*idle_time = idle;
 	}
 	if (parse_result == 0){
-		perror("CPU metric collection failed because of parsing error\n");
+		fprintf(stderr, "CPU metric collection failed because of parsing error\n");
 		exit(1);
 	}
 	if (parse_result == -1){
-		perror("Input failure, reached EOF before reaching any file\n");
+		fprintf(stderr, "Input failure, reached EOF before reaching any file\n");
 		exit(1);
 	}
 	fclose(fp);
@@ -51,7 +51,9 @@ double cpu_util_interval(int sleep_time){
 
 
 int main(){
-	printf("%f", cpu_util_interval(100));
+	while(1){
+		printf("CPU:%f%%\n", cpu_util_interval(1000));
+	}
 	return 0;
 }
 
