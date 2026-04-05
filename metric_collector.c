@@ -8,7 +8,7 @@ int collect_cpu_metric(char *cpu, unsigned long *total_cpu_time, unsigned long *
 	/*Collects CPU metric from /proc/stat file*/
 	FILE *fp = fopen("/proc/stat","r");
 	if (fp == NULL){
-		perror("Error opening /proc/stat\n");
+		perror("Error opening /proc/stat");
 		exit(1);
 	}
 	unsigned long user, nice, system, idle, iowait, irq, softirq;
@@ -38,7 +38,7 @@ int collect_memory_metric(unsigned long *mem_tot, unsigned long *mem_avail){
 	/*Parses /proc/meminfo and assigns MemTotal: and MemAvailable: field */
 	FILE *fp = fopen("/proc/meminfo", "r");
 	if (fp == NULL){
-		perror("Unable to open memory info file\n");
+		perror("Unable to open memory info file");
 		exit(1);
 	}
 	char label[64];
@@ -66,12 +66,15 @@ double cpu_util_interval(int sleep_time){
 	unsigned long total_cpu_util_time_1, idle_time_1, total_cpu_util_time_2, idle_time_2;
 	unsigned long delta_total_cpu_time, delta_idle;
 	double cpu_perc = 0.0;
-	int coll_cpu = collect_cpu_metric(cpu, &total_cpu_util_time_1, &idle_time_1);
-	if (coll_cpu == -1){
+	int coll_cpu1 = collect_cpu_metric(cpu, &total_cpu_util_time_1, &idle_time_1);
+	if (coll_cpu1 == -1){
 		return -1;
 	}
 	usleep(sleep_time * 1000);
-	collect_cpu_metric(cpu, &total_cpu_util_time_2, &idle_time_2);
+	int coll_cpu2 = collect_cpu_metric(cpu, &total_cpu_util_time_2, &idle_time_2);
+	if (coll_cpu2 == -1){
+		return -1;
+	}
 	delta_total_cpu_time = total_cpu_util_time_2 - total_cpu_util_time_1;
 	if (delta_total_cpu_time == 0){
 		return 0.0;
