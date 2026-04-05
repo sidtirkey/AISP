@@ -23,11 +23,34 @@ int collect_cpu_metric(char *cpu, unsigned long *total_cpu_time, unsigned long *
 	}
 	if (parse_result == 0){
 		fprintf(stderr, "CPU metric collection failed because of parsing error\n");
-		exit(1);
+		return -1;
 	}
 	if (parse_result == -1){
 		fprintf(stderr, "Input failure, reached EOF before reaching any file\n");
+		return -1;
+	}
+
+	fclose(fp);
+	return 0;
+}
+
+int collect_memory_metric(unsigned long *mem_tot, unsigned long *mem_avail){
+	FILE *fp = fopen("/proc/meminfo", "r");
+	if (fp == NULL){
+		perror("Unable to open memory info file\n");
 		exit(1);
+	}
+	char label[64];
+	char unit[10];
+	unsigned long value;
+	while (fscanf(fp, "%63s %lu %9s", label, &value, unit) == 3){
+		if (strcmp(label,"MemTotal:") == 0){
+			*mem_tot = value;
+		}
+		else if (strcmp(label, "MemAvailable:") == 0){
+			*mem_avail = value;
+			break;
+		}
 	}
 	fclose(fp);
 	return 0;
@@ -39,8 +62,8 @@ double cpu_util_interval(int sleep_time){
 	char cpu[10];
 	unsigned long total_cpu_util_time_1, idle_time_1, total_cpu_util_time_2, idle_time_2;
 	unsigned long delta_total_cpu_time, delta_idle;
-	double cpu_perc;
-	collect_cpu_metric(cpu, &total_cpu_util_time_1, &idle_time_1);
+	double cpu_perc = 0.0;
+	int coll_cpu = collect_cpu_metric(cpu, &total_cpu_util_time_1, &idle_time_1);
 	usleep(sleep_time * 1000);
 	collect_cpu_metric(cpu, &total_cpu_util_time_2, &idle_time_2);
 	delta_total_cpu_time = total_cpu_util_time_2 - total_cpu_util_time_1;
@@ -50,9 +73,19 @@ double cpu_util_interval(int sleep_time){
 }
 
 
+double memory_util(){
+	unsigned long mem_tot, mem_avail;
+	int coll_mem = collect_memory_metric(&mem_tot, &mem_avail);
+	double used_mem = mem_tot - mem_avail;
+	return used_mem;
+}
+
+
+
 int main(){
-	while(1){
-		printf("CPU:%f%%\n", cpu_util_interval(1000));
+	printf("Memory Util: %f\n", memory_util());
+	while (1){
+		printf("CPU util: %f\n", cpu_util_interval(500));
 	}
 	return 0;
 }
