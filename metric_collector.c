@@ -2,7 +2,26 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <time.h>
+#include <inttypes.h>
 
+
+typedef struct __attribute__ ((packed)) {
+	uint8_t header;
+	uint8_t version;
+	uint16_t agent_id;
+	uint64_t timestamp;
+	double cpu;
+	double memory;
+} AISPPacket;
+
+uint64_t get_timestamp_ms(){
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	uint64_t current_time = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+	return current_time;
+}
 
 int collect_cpu_metric(char *cpu, unsigned long *total_cpu_time, unsigned long *idle_time){
 	/*Collects CPU metric from /proc/stat file*/
@@ -98,14 +117,25 @@ double memory_util(){
 	return used_mem;
 }
 
+int fill_packet(AISPPacket *packet, uint8_t agent_id){
+	double cpu = cpu_util_interval(100);
+	double memory = memory_util();
+	uint64_t timestamp = get_timestamp_ms();
+	packet -> header = 0x01;
+	packet -> version = 0x01;
+	packet -> agent_id = agent_id;
+	packet -> timestamp = timestamp;
+	packet -> cpu = cpu;
+	packet -> memory = memory;
+}
+
 
 
 int main(){
-	printf("Memory Util: %f\n", memory_util());
-	while (1){
-		printf("CPU util: %f\n", cpu_util_interval(500));
-	}
-	return 0;
+	AISPPacket packet;
+	fill_packet(&packet, 1);
+	printf("%d %f",(int)packet.agent_id, packet.cpu);
+
 }
 
 
